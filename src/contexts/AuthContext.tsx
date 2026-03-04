@@ -23,12 +23,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
   const router = useRouter();
 
+  // 1. Initial mounting and session checking
   useEffect(() => {
-    // 1. Check active session
+    console.log("AuthProvider: Initializing...");
+    let mounted = true;
+
+    // Safety timeout: Never stay in loading state for more than 5 seconds
+    const safetyTimeout = setTimeout(() => {
+      if (mounted) {
+        setLoading((prev) => {
+          if (prev) console.warn("AuthProvider: Safety timeout triggered!");
+          return false;
+        });
+      }
+    }, 5000);
+
+    // Initial session check
     supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!mounted) return;
+      console.log("AuthProvider: Session retrieved", !!session);
+
       setSupabaseUser(session?.user ?? null);
       if (session?.user && session?.access_token) {
-        // If we have a session, fetch our backend profile or login
         fetchAndSetProfile(session.access_token);
       } else {
         setLoading(false);
@@ -39,10 +55,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (!mounted) return;
+      console.log("AuthProvider: Auth event", event);
       setSupabaseUser(session?.user ?? null);
 
-      if (event === "SIGNED_IN" && session?.access_token) {
-        setLoading(true);
+      if ((event === "SIGNED_IN" || event === "TOKEN_REFRESHED") && session?.access_token) {
+        setLoading((prev) => {
+          if (!user && !prev) return true;
+          return prev;
+        });
         await fetchAndSetProfile(session.access_token);
       } else if (event === "SIGNED_OUT") {
         setUser(null);
@@ -52,9 +73,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     });
 
     return () => {
+      mounted = false;
       subscription.unsubscribe();
+      clearTimeout(safetyTimeout);
     };
-  }, [router]);
+  }, [router]); // Stable array
+
+  // 3. Focus Heartbeat: Re-check on focus
+  useEffect(() => {
+    const handleFocus = () => {
+      if (document.visibilityState === "visible") {
+        setLoading((prev) => {
+          if (prev) {
+            console.log("AuthProvider: Tab focused, clearing stuck loading state");
+            return false;
+          }
+          return prev;
+        });
+      }
+    };
+    document.addEventListener("visibilitychange", handleFocus);
+    return () => document.removeEventListener("visibilitychange", handleFocus);
+  }, []);
 
   const fetchAndSetProfile = async (accessToken: string) => {
     try {
