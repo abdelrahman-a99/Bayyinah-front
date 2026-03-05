@@ -1,6 +1,6 @@
-# AI-Powered Messengers Stories Agent (Frontend)
+# Bayyinah (Frontend)
 
-This is the Next.js frontend application for the Messengers Stories AI Agent. It provides an immersive, Islamic-themed chat interface with RTL (Right-to-Left) Arabic support.
+This is the Next.js frontend application for the Bayyinah-RAG. It provides an immersive, Islamic-themed chat interface with RTL (Right-to-Left) Arabic support.
 
 ## Tech Stack
 
