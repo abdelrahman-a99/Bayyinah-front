@@ -1,3 +1,8 @@
-import { proxy, config } from "./src/proxy";
+import { proxy } from "./src/proxy";
 export default proxy;
-export { config };
+
+export const config = {
+  matcher: [
+    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+  ],
+};
