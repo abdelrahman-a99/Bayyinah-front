@@ -48,7 +48,13 @@ export default function ChatPage() {
 
   // Load conversations on mount
   useEffect(() => {
-    if (!user) return;
+    if (!user) {
+      setIsLoadingConversations(false);
+      setConversations([]);
+      setActiveId(null);
+      return;
+    }
+
     console.log("ChatPage: Loading conversations for user", user.id);
 
     const controller = new AbortController();
@@ -59,6 +65,7 @@ export default function ChatPage() {
     }, 3000);
 
     setIsLoadingConversations(true);
+
     api
       .getConversations()
       .then((data) => {
