@@ -7,7 +7,8 @@ import { ConversationOut, MessageOut } from "@/lib/types";
 import { Sidebar } from "@/components/Sidebar";
 import { ChatArea } from "@/components/ChatArea";
 import { MessageInput } from "@/components/MessageInput";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet";
+import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 import { Button } from "@/components/ui/button";
 import { Menu, Loader2 } from "lucide-react";
 
@@ -197,6 +198,9 @@ export default function ChatPage() {
               </Button>
             </SheetTrigger>
             <SheetContent side="right" className="p-0 w-80 border-r-0" dir="rtl">
+              <VisuallyHidden>
+                <SheetTitle>القائمة الجانبية</SheetTitle>
+              </VisuallyHidden>
               <Sidebar {...sidebarProps} />
             </SheetContent>
           </Sheet>
