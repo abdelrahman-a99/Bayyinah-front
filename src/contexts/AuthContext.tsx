@@ -28,7 +28,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     console.log("AuthProvider: Initializing...");
     let mounted = true;
 
-    // Safety timeout: Never stay in loading state for more than 5 seconds
+    // Safety timeout: Never stay in loading state for more than 30 seconds
+    // HuggingFace Spaces free tier can take 10-30s to wake up from sleep
     const safetyTimeout = setTimeout(() => {
       if (mounted) {
         setLoading((prev) => {
@@ -36,7 +37,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           return false;
         });
       }
-    }, 5000);
+    }, 30000);
 
     // Initial session check
     supabase.auth.getSession().then(({ data: { session } }) => {
