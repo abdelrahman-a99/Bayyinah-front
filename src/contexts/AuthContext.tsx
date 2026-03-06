@@ -17,6 +17,9 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+// Helper: wait for a given number of milliseconds
+const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [supabaseUser, setSupabaseUser] = useState<User | null>(null);
   const [user, setUser] = useState<UserOut | null>(null);
@@ -27,17 +30,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     console.log("AuthProvider: Initializing...");
     let mounted = true;
-
-    // Safety timeout: Never stay in loading state for more than 30 seconds
-    // HuggingFace Spaces free tier can take 10-30s to wake up from sleep
-    const safetyTimeout = setTimeout(() => {
-      if (mounted) {
-        setLoading((prev) => {
-          if (prev) console.warn("AuthProvider: Safety timeout triggered!");
-          return false;
-        });
-      }
-    }, 30000);
 
     // Initial session check
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -76,54 +68,48 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return () => {
       mounted = false;
       subscription.unsubscribe();
-      clearTimeout(safetyTimeout);
     };
   }, [router]); // Stable array
 
-  // 3. Focus Heartbeat: Re-check on focus
-  useEffect(() => {
-    const handleFocus = () => {
-      if (document.visibilityState === "visible") {
-        setLoading((prev) => {
-          if (prev) {
-            console.log("AuthProvider: Tab focused, clearing stuck loading state");
-            return false;
-          }
-          return prev;
-        });
-      }
-    };
-    document.addEventListener("visibilitychange", handleFocus);
-    return () => document.removeEventListener("visibilitychange", handleFocus);
-  }, []);
-
-  const fetchAndSetProfile = async (accessToken: string) => {
-    try {
-      // First try to get existing profile
+  const fetchAndSetProfile = async (accessToken: string, maxRetries = 3) => {
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
       try {
-        const profile = await api.getMe();
-        setUser(profile);
-      } catch (e: any) {
-        // If 401 or 403, we might need to login/register first with the backend
-        if (e.status === 401 || e.status === 403) {
-          const { user: newUser } = await api.login(accessToken);
-          setUser(newUser);
+        console.log(`AuthProvider: Fetching profile (attempt ${attempt}/${maxRetries})...`);
+
+        // First try to get existing profile
+        try {
+          const profile = await api.getMe();
+          console.log("AuthProvider: Profile loaded successfully");
+          setUser(profile);
+          return; // Success! Exit the retry loop
+        } catch (e: any) {
+          // If 401 or 403, we might need to login/register first with the backend
+          if (e.status === 401 || e.status === 403) {
+            const { user: newUser } = await api.login(accessToken);
+            console.log("AuthProvider: Login successful");
+            setUser(newUser);
+            return; // Success! Exit the retry loop
+          } else {
+            throw e; // Network errors, 500s, etc. -> retry
+          }
+        }
+      } catch (error) {
+        console.warn(`AuthProvider: Attempt ${attempt} failed:`, error);
+
+        if (attempt < maxRetries) {
+          // Wait before retrying (5s, 10s, etc.)
+          const delayMs = attempt * 5000;
+          console.log(`AuthProvider: Retrying in ${delayMs / 1000}s...`);
+          await wait(delayMs);
         } else {
-          throw e; // Other errors
+          // All retries exhausted
+          console.error("AuthProvider: All retries exhausted. Signing out.");
+          setUser(null);
+          await supabase.auth.signOut();
         }
       }
-    } catch (error) {
-      console.error("Error fetching user profile:", error);
-      // FIX: If we absolutely cannot sync with the backend, we should log the user out
-      // so they don't get stuck in a broken "Guest" state.
-      setUser(null);
-      await supabase.auth.signOut();
-
-      // Optional: You could also use a toast library here to show a red error popup
-      // toast.error("Failed to connect to the server. Please try logging in again.");
-    } finally {
-      setLoading(false);
     }
+    setLoading(false);
   };
 
   const signInWithGoogle = async () => {
