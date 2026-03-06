@@ -113,6 +113,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     } catch (error) {
       console.error("Error fetching user profile:", error);
+      // FIX: If we absolutely cannot sync with the backend, we should log the user out
+      // so they don't get stuck in a broken "Guest" state.
+      setUser(null);
+      await supabase.auth.signOut();
+
+      // Optional: You could also use a toast library here to show a red error popup
+      // toast.error("Failed to connect to the server. Please try logging in again.");
     } finally {
       setLoading(false);
     }
