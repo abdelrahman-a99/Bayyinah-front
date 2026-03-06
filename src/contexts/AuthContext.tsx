@@ -72,44 +72,47 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [router]); // Stable array
 
   const fetchAndSetProfile = async (accessToken: string, maxRetries = 3) => {
-    for (let attempt = 1; attempt <= maxRetries; attempt++) {
-      try {
-        console.log(`AuthProvider: Fetching profile (attempt ${attempt}/${maxRetries})...`);
-
-        // First try to get existing profile
+    try {
+      for (let attempt = 1; attempt <= maxRetries; attempt++) {
         try {
-          const profile = await api.getMe();
-          console.log("AuthProvider: Profile loaded successfully");
-          setUser(profile);
-          return; // Success! Exit the retry loop
-        } catch (e: any) {
-          // If 401 or 403, we might need to login/register first with the backend
-          if (e.status === 401 || e.status === 403) {
-            const { user: newUser } = await api.login(accessToken);
-            console.log("AuthProvider: Login successful");
-            setUser(newUser);
+          console.log(`AuthProvider: Fetching profile (attempt ${attempt}/${maxRetries})...`);
+
+          // First try to get existing profile
+          try {
+            const profile = await api.getMe();
+            console.log("AuthProvider: Profile loaded successfully");
+            setUser(profile);
             return; // Success! Exit the retry loop
+          } catch (e: any) {
+            // If 401 or 403, we might need to login/register first with the backend
+            if (e.status === 401 || e.status === 403) {
+              const { user: newUser } = await api.login(accessToken);
+              console.log("AuthProvider: Login successful");
+              setUser(newUser);
+              return; // Success! Exit the retry loop
+            } else {
+              throw e; // Network errors, 500s, etc. -> retry
+            }
+          }
+        } catch (error) {
+          console.warn(`AuthProvider: Attempt ${attempt} failed:`, error);
+
+          if (attempt < maxRetries) {
+            // Wait before retrying (5s, 10s, etc.)
+            const delayMs = attempt * 5000;
+            console.log(`AuthProvider: Retrying in ${delayMs / 1000}s...`);
+            await wait(delayMs);
           } else {
-            throw e; // Network errors, 500s, etc. -> retry
+            // All retries exhausted
+            console.error("AuthProvider: All retries exhausted. Signing out.");
+            setUser(null);
+            await supabase.auth.signOut();
           }
         }
-      } catch (error) {
-        console.warn(`AuthProvider: Attempt ${attempt} failed:`, error);
-
-        if (attempt < maxRetries) {
-          // Wait before retrying (5s, 10s, etc.)
-          const delayMs = attempt * 5000;
-          console.log(`AuthProvider: Retrying in ${delayMs / 1000}s...`);
-          await wait(delayMs);
-        } else {
-          // All retries exhausted
-          console.error("AuthProvider: All retries exhausted. Signing out.");
-          setUser(null);
-          await supabase.auth.signOut();
-        }
       }
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   const signInWithGoogle = async () => {
