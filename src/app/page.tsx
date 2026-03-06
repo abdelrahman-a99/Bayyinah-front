@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useEffect, useState, useRef } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { api } from "@/lib/api";
@@ -30,6 +31,8 @@ import { Menu, Loader2, PanelRightOpen } from "lucide-react";
 import { toast } from "sonner";
 
 export default function ChatPage() {
+  const router = useRouter();
+
   const { user, loading: authLoading } = useAuth();
 
   const [conversations, setConversations] = useState<ConversationOut[]>([]);
@@ -45,6 +48,12 @@ export default function ChatPage() {
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  useEffect(() => {
+  if (!authLoading && !user) {
+    router.push("/login");
+  }
+}, [authLoading, user, router]);
 
   // Load conversations on mount
   useEffect(() => {
