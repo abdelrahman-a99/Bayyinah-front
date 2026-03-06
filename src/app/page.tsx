@@ -12,8 +12,6 @@ import { Button } from "@/components/ui/button";
 import { Menu, Loader2 } from "lucide-react";
 
 export default function ChatPage() {
-  const router = useRouter();
-
   const { user, loading: authLoading } = useAuth();
 
   const [conversations, setConversations] = useState<ConversationOut[]>([]);
@@ -25,15 +23,12 @@ export default function ChatPage() {
   const [isAiTyping, setIsAiTyping] = useState(false);
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
 
-  useEffect(() => {
-  if (!authLoading && !user) {
-    router.push("/login");
-  }
-}, [authLoading, user, router]);
-
   // Load conversations on mount
   useEffect(() => {
-    if (!user) return;
+    if (!user) {
+      setIsLoadingConversations(false);
+      return;
+    }
 
     setIsLoadingConversations(true);
     api.getConversations()
