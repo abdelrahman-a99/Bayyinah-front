@@ -144,7 +144,7 @@ export const api = {
       body: JSON.stringify(data),
       },
       undefined,
-      120000
+      600000
     );
     return res.json();
   },
