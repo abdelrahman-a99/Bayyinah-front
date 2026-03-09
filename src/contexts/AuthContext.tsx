@@ -11,6 +11,9 @@ interface AuthContextType {
   user: UserOut | null;
   supabaseUser: User | null;
   loading: boolean;
+  backendUnavailable: boolean;
+  backendMessage: string | null;
+  retryBackendConnection: () => Promise<void>;
   signInWithGoogle: () => Promise<void>;
   signOut: () => Promise<void>;
 }
@@ -37,6 +40,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<UserOut | null>(null);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
+
+  const [backendUnavailable, setBackendUnavailable] = useState(false);
+  const [backendMessage, setBackendMessage] = useState<string | null>(null);
 
   const mountedRef = useRef(true);
   const userRef = useRef<UserOut | null>(null);
@@ -72,6 +78,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           try {
             const profile = await api.getMe(accessToken);
             if (!mountedRef.current) return;
+            setBackendUnavailable(false);
+            setBackendMessage(null);
             setUser(profile);
             return;
           } catch (error: unknown) {
@@ -82,6 +90,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             if (status === 401 || status === 403) {
               const { user: backendUser } = await api.login(accessToken);
               if (!mountedRef.current) return;
+              setBackendUnavailable(false);
+              setBackendMessage(null);
               setUser(backendUser);
               return;
             }
@@ -102,8 +112,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if ((status === 401 || status === 403) && mountedRef.current) {
           setUser(null);
           setApiAccessToken(null);
+          setBackendUnavailable(false);
+          setBackendMessage(null);
           await supabase.auth.signOut();
           return;
+        }
+
+        if (mountedRef.current) {
+          setBackendUnavailable(true);
+          setBackendMessage(
+            "نعتذر عن الإزعاج. الخادم غير متاح حالياً. يرجى إعادة المحاولة بعد قليل، وإذا استمرت المشكلة نأمل العودة لاحقاً."
+          );
         }
       } finally {
         isFetchingProfileRef.current = false;
@@ -114,6 +133,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     },
     []
   );
+
+  const retryBackendConnection = async () => {
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+
+    if (!session?.access_token) return;
+
+    await fetchAndSetProfile(session.access_token, {
+      silent: false,
+      maxRetries: 1,
+    });
+  };
 
   useEffect(() => {
     mountedRef.current = true;
@@ -211,6 +243,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         user,
         supabaseUser,
         loading,
+        backendUnavailable,
+        backendMessage,
+        retryBackendConnection,
         signInWithGoogle,
         signOut,
       }}

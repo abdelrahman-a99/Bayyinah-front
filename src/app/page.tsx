@@ -15,7 +15,14 @@ import { toast } from "sonner";
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 
 export default function ChatPage() {
-  const { user, loading: authLoading } = useAuth();
+  const {
+    user,
+    loading: authLoading,
+    backendUnavailable,
+    backendMessage,
+    retryBackendConnection,
+    signOut,
+  } = useAuth();
 
   const [conversations, setConversations] = useState<ConversationOut[]>([]);
   const [activeId, setActiveId] = useState<string | null>(null);
@@ -197,6 +204,39 @@ export default function ChatPage() {
     }
   };
 
+  if (backendUnavailable && !user?.id) {
+    return (
+      <div className="flex h-screen w-full items-center justify-center bg-background px-4">
+        <div className="w-full max-w-md rounded-2xl border border-border bg-card p-6 shadow-sm text-center space-y-4">
+          <div className="flex justify-center">
+            <div className="rounded-full bg-destructive/10 p-3 text-destructive">
+              <Loader2 className="h-6 w-6 animate-spin" />
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <h1 className="text-xl font-bold font-kufi text-foreground">
+              يتعذر الوصول إلى الخادم حالياً
+            </h1>
+            <p className="text-sm text-muted-foreground leading-7 font-naskh">
+              {backendMessage ??
+                "نعتذر عن الإزعاج. الخادم غير متاح حالياً. يرجى إعادة المحاولة بعد قليل، وإذا استمرت المشكلة نأمل العودة لاحقاً."}
+            </p>
+          </div>
+
+          <div className="flex flex-col gap-3 sm:flex-row sm:justify-center">
+            <Button onClick={() => void retryBackendConnection()}>
+              إعادة المحاولة
+            </Button>
+            <Button variant="outline" onClick={() => void signOut()}>
+              تسجيل الخروج
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   if (authLoading || isLoadingConversations) {
     return (
       <div className="flex h-screen w-full items-center justify-center bg-background">
@@ -309,7 +349,7 @@ export default function ChatPage() {
         <div className="p-3 md:p-6 bg-linear-to-t from-background via-background to-transparent shrink-0">
           <MessageInput
             onSend={handleSendMessage}
-            disabled={isAiTyping || isLoadingMessages}
+            disabled={isAiTyping || isLoadingMessages || backendUnavailable || !user?.id}
           />
           <p className="text-center text-xs text-muted-foreground mt-3 font-naskh hidden md:block">
             يقدم الوكيل إجابات مستندة إلى القرآن الكريم والسنة النبوية بإذن الله
