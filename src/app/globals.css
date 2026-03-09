@@ -98,6 +98,8 @@
   --ring: #0d7377;
   --radius: 0.75rem;
   /* 12px for softer cards */
+  --sidebar-bg: #f1f5f9;
+  /* Slightly darker than background for sidebar */
   --chart-1: #0d7377;
   --chart-2: #d4a843;
   --chart-3: #14b8a6;
@@ -133,6 +135,8 @@
   --border: #1e293b;
   --input: #1e293b;
   --ring: #14919b;
+  --sidebar-bg: #111827;
+  /* Matches --card (gray-900) for cohesive surface look */
 }
 
 @layer base {
@@ -149,6 +153,10 @@
 @layer utilities {
   .rtl-flip {
     transform: scaleX(-1);
+  }
+
+  .sidebar-transition {
+    transition: width 300ms cubic-bezier(0.4, 0, 0.2, 1);
   }
 
   .glass-card {

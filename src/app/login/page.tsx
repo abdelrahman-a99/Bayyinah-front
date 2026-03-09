@@ -68,7 +68,7 @@ export default function LoginPage() {
               disabled={isLoading}
             >
               {isLoading ? (
-                <Loader2 className="mr-2 h-5 w-5 animate-spin rtl-flip" />
+                <Loader2 className="mr-2 h-5 w-5 animate-spin" />
               ) : (
                 <svg
                   className="mr-2 w-5 h-5"

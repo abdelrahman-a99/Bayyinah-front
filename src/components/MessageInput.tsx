@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { SendHorizontal } from "lucide-react";
+import { ArrowUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 
@@ -38,7 +38,7 @@ export function MessageInput({ onSend, disabled }: MessageInputProps) {
   };
 
   return (
-    <div className="relative flex items-end w-full max-w-4xl mx-auto bg-background border border-border rounded-2xl p-2 shadow-sm focus-within:ring-1 focus-within:ring-primary/50 transition-all">
+    <div className="flex items-end w-full max-w-2xl mx-auto bg-muted/60 rounded-[1.75rem] p-2 focus-within:bg-muted/80 transition-colors">
       <Textarea
         ref={textareaRef}
         value={content}
@@ -46,18 +46,19 @@ export function MessageInput({ onSend, disabled }: MessageInputProps) {
         onKeyDown={handleKeyDown}
         placeholder="اسأل عن قصص الأنبياء..."
         disabled={disabled}
-        className="min-h-11 max-h-50 border-0 focus-visible:ring-0 resize-none font-naskh text-base py-3 px-4 shadow-none bg-transparent"
+        className="flex-1 min-h-12 max-h-50 border-0 focus-visible:ring-0 focus-visible:border-transparent resize-none font-naskh text-base py-3 px-4 shadow-none bg-transparent overflow-y-auto leading-relaxed"
+        style={{ fieldSizing: "content" }}
         dir="rtl"
         rows={1}
       />
-      <div className="absolute left-2 bottom-2 md:left-3 md:bottom-3 shrink-0 rtl:left-2 rtl:right-auto ltr:right-2 ltr:left-auto">
+      <div className="shrink-0 ms-1 me-1 mb-1.5">
         <Button
           onClick={handleSend}
           disabled={!content.trim() || disabled}
           size="icon"
-          className="h-10 w-10 md:h-12 md:w-12 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 transition-all shadow-sm rtl-flip"
+          className="h-9 w-9 rounded-full bg-primary text-primary-foreground hover:bg-primary/90 transition-all shadow-sm cursor-pointer flex items-center justify-center p-0"
         >
-          <SendHorizontal className="h-5 w-5 md:h-6 md:w-6" />
+          <ArrowUp className="h-5 w-5" />
         </Button>
       </div>
     </div>

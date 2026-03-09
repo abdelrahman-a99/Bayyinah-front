@@ -7,10 +7,11 @@ import { ConversationOut, MessageOut } from "@/lib/types";
 import { Sidebar } from "@/components/Sidebar";
 import { ChatArea } from "@/components/ChatArea";
 import { MessageInput } from "@/components/MessageInput";
-import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet";
-import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetTrigger, } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
-import { Menu, Loader2 } from "lucide-react";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { Menu, Loader2, PanelRightOpen } from "lucide-react";
+import { toast } from "sonner";
 
 export default function ChatPage() {
   const { user, loading: authLoading } = useAuth();
@@ -23,8 +24,10 @@ export default function ChatPage() {
   const [isLoadingMessages, setIsLoadingMessages] = useState(false);
   const [isAiTyping, setIsAiTyping] = useState(false);
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
 
-  // Load conversations on mount
+  // Load conversations when authenticated user changes
   useEffect(() => {
     if (!user?.id) {
       setConversations([]);
@@ -45,11 +48,13 @@ export default function ChatPage() {
           return data.length > 0 ? data[0].id : null;
         });
       })
-      .catch(console.error)
+      .catch((error) => {
+        console.error("Failed to load conversations:", error);
+      })
       .finally(() => setIsLoadingConversations(false));
   }, [user?.id]);
 
-  // Load messages when activeId changes
+  // Load messages when active conversation changes
   useEffect(() => {
     if (!activeId) {
       setMessages([]);
@@ -61,14 +66,25 @@ export default function ChatPage() {
       .then((data) => {
         setMessages(data);
       })
-      .catch(console.error)
+      .catch((error) => {
+        console.error("Failed to load messages:", error);
+      })
       .finally(() => setIsLoadingMessages(false));
   }, [activeId]);
 
   const handleNewConversation = async () => {
+    // If current chat is already empty, reuse it instead of creating another one
+    if (activeId && messages.length === 0) {
+      if (typeof window !== "undefined") {
+        document.querySelector("textarea")?.focus();
+      }
+      setIsMobileSidebarOpen(false);
+      return;
+    }
+
     try {
       const newConv = await api.createConversation({ title: "محادثة جديدة" });
-      setConversations([newConv, ...conversations]);
+      setConversations((prev) => [newConv, ...prev]);
       setActiveId(newConv.id);
       setIsMobileSidebarOpen(false);
     } catch (error) {
@@ -76,29 +92,35 @@ export default function ChatPage() {
     }
   };
 
-  const handleRenameConversation = async (id: string) => {
-    const title = window.prompt("أدخل الاسم الجديد للمحادثة:");
-    if (!title || !title.trim()) return;
+  const handleRenameConversation = async (id: string, newTitle: string) => {
+    if (!newTitle || !newTitle.trim()) return;
 
     try {
-      const updated = await api.updateConversation(id, { title: title.trim() });
-      setConversations(conversations.map(c => c.id === id ? updated : c));
+      const updated = await api.updateConversation(id, {
+        title: newTitle.trim(),
+      });
+      setConversations((prev) => prev.map((c) => (c.id === id ? updated : c)));
     } catch (error) {
       console.error("Failed to rename conversation:", error);
     }
   };
 
   const handleDeleteConversation = async (id: string) => {
-    const confirmed = window.confirm("هل أنت متأكد من حذف هذه المحادثة بشكل دائم؟");
-    if (!confirmed) return;
-
     try {
       await api.deleteConversation(id);
-      setConversations(conversations.filter(c => c.id !== id));
-      if (activeId === id) {
-        const remaining = conversations.filter(c => c.id !== id);
-        setActiveId(remaining.length > 0 ? remaining[0].id : null);
-      }
+
+      setConversations((prev) => {
+        const remaining = prev.filter((c) => c.id !== id);
+
+        setActiveId((currentActiveId) => {
+          if (currentActiveId === id) {
+            return remaining.length > 0 ? remaining[0].id : null;
+          }
+          return currentActiveId;
+        });
+
+        return remaining;
+      });
     } catch (error) {
       console.error("Failed to delete conversation:", error);
     }
@@ -109,13 +131,12 @@ export default function ChatPage() {
 
     let targetConvId = activeId;
 
-    // Create new conversation if none active
     if (!targetConvId) {
       try {
-        // use the first words as title, up to 30 chars
-        const title = content.substring(0, 30) + (content.length > 30 ? "..." : "");
+        const title =
+          content.substring(0, 30) + (content.length > 30 ? "..." : "");
         const newConv = await api.createConversation({ title });
-        setConversations([newConv, ...conversations]);
+        setConversations((prev) => [newConv, ...prev]);
         targetConvId = newConv.id;
         setActiveId(newConv.id);
       } catch (error) {
@@ -124,7 +145,8 @@ export default function ChatPage() {
       }
     }
 
-    // Optimistically add user message
+    if (!targetConvId) return;
+
     const tempId = `temp-${Date.now()}`;
     const userMsg: MessageOut = {
       id: tempId,
@@ -135,33 +157,40 @@ export default function ChatPage() {
       created_at: new Date().toISOString(),
     };
 
-    setMessages(prev => [...prev, userMsg]);
+    setMessages((prev) => [...prev, userMsg]);
     setIsAiTyping(true);
 
     try {
       const response = await api.sendMessage(targetConvId, { content });
-      // Replace temp with actual, and add AI response
-      setMessages(prev => [
-        ...prev.filter(m => m.id !== tempId),
+
+      setMessages((prev) => [
+        ...prev.filter((m) => m.id !== tempId),
         response.user_message,
-        response.assistant_message
+        response.assistant_message,
       ]);
 
-      // Update conversation title if this is the first message and it was just "محادثة جديدة"
-      const currentConv = conversations.find(c => c.id === targetConvId);
-      if (currentConv && currentConv.title === "محادثة جديدة" && messages.length === 0) {
-        const title = content.substring(0, 30) + (content.length > 30 ? "..." : "");
-        api.updateConversation(targetConvId, { title }).then(updated => {
-          setConversations(prev => prev.map(c => c.id === targetConvId ? updated : c));
+      const currentConv = conversations.find((c) => c.id === targetConvId);
+      if (
+        currentConv &&
+        currentConv.title === "محادثة جديدة" &&
+        messages.length === 0
+      ) {
+        const title =
+          content.substring(0, 30) + (content.length > 30 ? "..." : "");
+
+        api.updateConversation(targetConvId, { title }).then((updated) => {
+          setConversations((prev) =>
+            prev.map((c) => (c.id === targetConvId ? updated : c))
+          );
         });
       }
     } catch (error: unknown) {
       console.error("Failed to send message:", error);
-      // Remove the optimistic message on fail
-      setMessages(prev => prev.filter(m => m.id !== tempId));
+      setMessages((prev) => prev.filter((m) => m.id !== tempId));
 
-      const message = error instanceof Error ? error.message : "حدث خطأ غير متوقع";
-      alert(`عذراً، حدث خطأ: ${message}`);
+      const message =
+        error instanceof Error ? error.message : "حدث خطأ غير متوقع";
+      toast.error(`عذراً، حدث خطأ: ${message}`);
     } finally {
       setIsAiTyping(false);
     }
@@ -180,7 +209,6 @@ export default function ChatPage() {
     );
   }
 
-  // Define sidebar props object for reuse
   const sidebarProps = {
     conversations,
     activeId,
@@ -189,37 +217,82 @@ export default function ChatPage() {
       setIsMobileSidebarOpen(false);
     },
     onNew: handleNewConversation,
-    onDelete: handleDeleteConversation,
+    onDelete: (id: string) => setDeleteConfirmId(id),
     onRename: handleRenameConversation,
   };
 
   return (
     <div className="flex h-screen overflow-hidden bg-background">
       {/* Desktop Sidebar */}
-      <div className="hidden md:flex h-full z-10">
-        <Sidebar {...sidebarProps} />
+      <div
+        className="hidden md:flex flex-col h-full shrink-0 sidebar-transition overflow-hidden"
+        style={{ width: isSidebarOpen ? undefined : 0 }}
+      >
+        <div className="flex flex-col h-full w-72 lg:w-80">
+          <Sidebar
+            {...sidebarProps}
+            onToggle={() => setIsSidebarOpen(false)}
+          />
+        </div>
       </div>
 
       {/* Main Chat Area */}
       <div className="flex flex-col flex-1 h-full min-w-0 relative">
-        {/* Mobile Header */}
-        <div className="md:hidden flex items-center justify-between p-3 border-b border-border/40 bg-background/80 backdrop-blur z-20 sticky top-0">
-          <Sheet open={isMobileSidebarOpen} onOpenChange={setIsMobileSidebarOpen}>
-            <SheetTrigger asChild>
-              <Button variant="ghost" size="icon" className="text-foreground">
-                <Menu className="h-6 w-6" />
-              </Button>
-            </SheetTrigger>
-            <SheetContent side="right" className="p-0 w-80 border-r-0" dir="rtl">
-              <VisuallyHidden>
-                <SheetTitle>القائمة الجانبية</SheetTitle>
-              </VisuallyHidden>
-              <Sidebar {...sidebarProps} />
-            </SheetContent>
-          </Sheet>
+        {/* Top Bar */}
+        <div className="flex items-center gap-2 p-2 md:p-3 shrink-0 sticky top-0 z-20 bg-background/80 backdrop-blur border-b border-border/40 md:border-b-0">
+          {!isSidebarOpen && (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="hidden md:inline-flex h-9 w-9 cursor-pointer text-muted-foreground hover:text-foreground"
+              onClick={() => setIsSidebarOpen(true)}
+              aria-label="فتح القائمة الجانبية"
+            >
+              <PanelRightOpen className="h-5 w-5" />
+            </Button>
+          )}
 
-          <div className="font-kufi font-bold text-lg text-primary truncate">قصص الأنبياء</div>
-          <div className="w-10"></div> {/* Spacer for centering */}
+          <div className="md:hidden">
+            <Sheet
+              open={isMobileSidebarOpen}
+              onOpenChange={setIsMobileSidebarOpen}
+            >
+              <SheetTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="text-foreground h-9 w-9 cursor-pointer"
+                >
+                  <Menu className="h-5 w-5" />
+                </Button>
+              </SheetTrigger>
+
+              <SheetContent
+                side="right"
+                className="p-0 w-80 border-s-0 flex flex-col h-full"
+                dir="rtl"
+                showCloseButton={false}
+              >
+                <SheetHeader className="sr-only">
+                  <SheetTitle>القائمة الجانبية</SheetTitle>
+                  <SheetDescription>
+                    قائمة المحادثات السابقة وخيارات الحساب
+                  </SheetDescription>
+                </SheetHeader>
+                <Sidebar {...sidebarProps} />
+              </SheetContent>
+            </Sheet>
+          </div>
+
+          <div
+            className={`font-kufi font-bold text-base text-primary truncate flex-1 text-center md:text-start ${
+              isSidebarOpen ? "md:hidden" : ""
+            }`}
+          >
+            قصص الأنبياء
+          </div>
+
+          <div className="w-9 md:hidden" />
         </div>
 
         {/* Messages Space */}
@@ -240,6 +313,39 @@ export default function ChatPage() {
           </p>
         </div>
       </div>
+
+      <AlertDialog
+        open={!!deleteConfirmId}
+        onOpenChange={() => setDeleteConfirmId(null)}
+      >
+        <AlertDialogContent dir="rtl" className="font-naskh">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="font-kufi">
+              حذف المحادثة
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              هل أنت متأكد من حذف هذه المحادثة بشكل دائم؟ لا يمكن التراجع عن هذا
+              الإجراء.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="gap-2 sm:justify-start">
+            <AlertDialogAction
+              className="bg-red-500! hover:bg-red-700! cursor-pointer"
+              onClick={() => {
+                if (deleteConfirmId) {
+                  void handleDeleteConversation(deleteConfirmId);
+                }
+                setDeleteConfirmId(null);
+              }}
+            >
+              حذف
+            </AlertDialogAction>
+            <AlertDialogCancel className="cursor-pointer border-border m-0">
+              إلغاء
+            </AlertDialogCancel>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

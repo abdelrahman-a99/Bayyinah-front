@@ -29,18 +29,18 @@ export function ChatArea({ messages, isLoading, isInitialLoading }: ChatAreaProp
     return (
       <div className="flex-1 flex flex-col items-center justify-center p-8 text-center animate-fade-in">
         <div className="w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center text-primary mb-6 shadow-sm">
-          <BookOpenText className="w-10 h-10 rtl-flip" />
+          <BookOpenText className="w-10 h-10" />
         </div>
         <h2 className="text-2xl font-bold font-kufi text-foreground mb-3">مرحباً بك في قصص الأنبياء</h2>
         <p className="text-muted-foreground text-lg max-w-md font-naskh leading-relaxed">
           يمكنك طرح أي سؤال حول قصص الأنبياء، وسأجيبك استناداً إلى مصادر موثوقة من القرآن الكريم والسنة النبوية.
         </p>
 
-        <div className="mt-8 grid gap-3 w-full max-w-lg">
-          <div className="p-4 rounded-xl border border-border/50 bg-muted/30 text-right text-sm font-naskh text-muted-foreground hover:bg-muted/50 transition-colors cursor-default">
+        <div className="mt-8 flex flex-col md:flex-row flex-wrap justify-center gap-3 w-full max-w-2xl px-4">
+          <div className="px-5 py-3 rounded-full border border-border/50 text-center text-sm font-naskh text-muted-foreground hover:bg-muted/30 hover:text-foreground transition-colors cursor-pointer shadow-sm">
             &quot;ما هي معجزات النبي موسى عليه السلام؟&quot;
           </div>
-          <div className="p-4 rounded-xl border border-border/50 bg-muted/30 text-right text-sm font-naskh text-muted-foreground hover:bg-muted/50 transition-colors cursor-default">
+          <div className="px-5 py-3 rounded-full border border-border/50 text-center text-sm font-naskh text-muted-foreground hover:bg-muted/30 hover:text-foreground transition-colors cursor-pointer shadow-sm">
             &quot;حدثني عن قصة أصحاب الكهف والعبرة منها&quot;
           </div>
         </div>
