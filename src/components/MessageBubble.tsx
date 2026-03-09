@@ -9,6 +9,36 @@ interface MessageBubbleProps {
 export function MessageBubble({ message }: MessageBubbleProps) {
   const isUser = message.role === "user";
 
+  const citations = Array.isArray(message.metadata.citations)
+    ? (message.metadata.citations as Array<{
+        source_tier?: string;
+        document_name?: string;
+        content?: string;
+        metadata?: {
+          page?: string | number;
+          sura?: string;
+        };
+      }>)
+    : [];
+
+  const usedSources = Array.isArray(message.metadata.used_sources)
+    ? message.metadata.used_sources.filter(
+        (source): source is string => typeof source === "string"
+      )
+    : [];
+
+  const confidenceScore =
+    typeof message.metadata.confidence_score === "number"
+      ? message.metadata.confidence_score
+      : 0;
+
+  const tierBreakdown =
+    typeof message.metadata.tier_breakdown === "object" &&
+    message.metadata.tier_breakdown !== null &&
+    !Array.isArray(message.metadata.tier_breakdown)
+      ? (message.metadata.tier_breakdown as Record<string, number>)
+      : {};
+
   return (
     <div className={`flex w-full ${isUser ? "justify-end" : "justify-start"} mb-6 animate-fade-in`}>
       <div
@@ -46,10 +76,10 @@ export function MessageBubble({ message }: MessageBubbleProps) {
           {!isUser && message.metadata && (
             <div className="w-full">
               <CitationCard
-                citations={message.metadata.citations || []}
-                usedSources={message.metadata.used_sources || []}
-                confidenceScore={message.metadata.confidence_score || 0}
-                tierBreakdown={message.metadata.tier_breakdown || {}}
+                citations={citations}
+                usedSources={usedSources}
+                confidenceScore={confidenceScore}
+                tierBreakdown={tierBreakdown}
               />
             </div>
           )}
