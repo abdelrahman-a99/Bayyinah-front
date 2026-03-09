@@ -7,11 +7,12 @@ import { ConversationOut, MessageOut } from "@/lib/types";
 import { Sidebar } from "@/components/Sidebar";
 import { ChatArea } from "@/components/ChatArea";
 import { MessageInput } from "@/components/MessageInput";
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetTrigger, } from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetTitle, SheetDescription, SheetTrigger, } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Menu, Loader2, PanelRightOpen } from "lucide-react";
 import { toast } from "sonner";
+import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 
 export default function ChatPage() {
   const { user, loading: authLoading } = useAuth();
@@ -273,12 +274,14 @@ export default function ChatPage() {
                 dir="rtl"
                 showCloseButton={false}
               >
-                <SheetHeader className="sr-only">
+                <VisuallyHidden asChild>
                   <SheetTitle>القائمة الجانبية</SheetTitle>
+                </VisuallyHidden>
+                <VisuallyHidden asChild>
                   <SheetDescription>
                     قائمة المحادثات السابقة وخيارات الحساب
                   </SheetDescription>
-                </SheetHeader>
+                </VisuallyHidden>
                 <Sidebar {...sidebarProps} />
               </SheetContent>
             </Sheet>
