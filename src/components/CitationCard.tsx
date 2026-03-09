@@ -1,17 +1,14 @@
 import { useState } from "react";
-import { ChevronDown, ChevronUp, ShieldCheck } from "lucide-react";
+import { ChevronDown, ChevronUp, ShieldCheck, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
-interface CitationMetadata {
-  page?: string | number;
-  sura?: string;
-}
-
 interface CitationItem {
-  source_tier?: string;
-  document_name?: string;
-  content?: string;
-  metadata?: CitationMetadata;
+  uid?: string;
+  display?: string;
+  short?: string;
+  url?: string | null;
+  tier?: number;
+  is_narrative?: boolean;
 }
 
 interface CitationCardProps {
@@ -28,6 +25,13 @@ export function CitationCard({
   tierBreakdown,
 }: CitationCardProps) {
   const [isExpanded, setIsExpanded] = useState(false);
+
+  const getTierLabel = (tier?: number) => {
+    if (tier === 1) return "📖 القرآن الكريم / التفسير";
+    if (tier === 2) return "📜 الحديث الشريف";
+    if (tier === 3) return "📚 المصادر السردية";
+    return "📚 مصدر";
+  };
 
   if (!citations?.length && !usedSources?.length) return null;
 
@@ -59,11 +63,22 @@ export function CitationCard({
           {/* Tiers summary */}
           {Object.keys(tierBreakdown || {}).length > 0 && (
             <div className="flex gap-2 flex-wrap mb-3">
-              {Object.entries(tierBreakdown).map(([tier, count]) => (
-                <span key={tier} className="bg-background border border-border text-muted-foreground px-2 py-1 rounded text-xs">
-                  {tier === "tier1" ? "القرآن الكريم" : tier === "tier2" ? "السنة النبوية" : tier}: {count as number}
-                </span>
-              ))}
+              {Object.entries(tierBreakdown).map(([tier, count]) => {
+                const label =
+                  tier === "tier_1"
+                    ? "القرآن الكريم / التفسير"
+                    : tier === "tier_2"
+                      ? "الحديث الشريف"
+                      : tier === "tier_3"
+                        ? "المصادر السردية"
+                        : tier;
+
+                return (
+                  <span key={tier} className="bg-background border border-border text-muted-foreground px-2 py-1 rounded text-xs">
+                    {label}: {count}
+                  </span>
+                );
+              })}
             </div>
           )}
 
@@ -71,23 +86,47 @@ export function CitationCard({
           {citations?.length > 0 ? (
             <div className="space-y-3">
               {citations.map((cite, idx) => (
-                <div key={idx} className="bg-background rounded p-3 border border-border shadow-sm">
+                <div key={`${cite.uid || "citation"}-${idx}`} className="bg-background rounded p-3 border border-border shadow-sm">
                   <div className="flex justify-between items-start mb-2">
                     <span className="font-bold font-kufi text-primary">
-                      {cite.source_tier === "tier1" ? "📖 القرآن الكريم" : cite.source_tier === "tier2" ? "📜 حديث شريف" : "📚 مصدر"}
+                      {getTierLabel(cite.tier)}
                     </span>
-                    {cite.document_name && (
+
+                    {cite.uid && (
                       <span className="text-xs text-muted-foreground bg-muted px-2 py-1 rounded">
-                        {cite.document_name}
+                        {cite.uid}
                       </span>
                     )}
                   </div>
-                  <p className="font-naskh text-foreground/90 leading-relaxed text-sm my-2">
-                    &quot;{cite.content}&quot;
-                  </p>
+
+                  {cite.display && (
+                    <p className="font-naskh text-foreground/90 leading-relaxed text-sm my-2">
+                      {cite.display}
+                    </p>
+                  )}
+
+                  {cite.short && (
+                    <p className="text-xs leading-relaxed text-muted-foreground font-naskh">
+                      {cite.short}
+                    </p>
+                  )}
+
                   <div className="flex flex-wrap gap-2 text-xs text-muted-foreground mt-2">
-                    {cite.metadata?.page && <span>صفحة: {cite.metadata.page}</span>}
-                    {cite.metadata?.sura && <span>سورة: {cite.metadata.sura}</span>}
+                    {typeof cite.is_narrative === "boolean" && (
+                      <span>{cite.is_narrative ? "مصدر سردي" : "مصدر موثّق"}</span>
+                    )}
+
+                    {cite.url && (
+                      <a
+                        href={cite.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1 text-primary hover:underline"
+                      >
+                        فتح المصدر
+                        <ExternalLink className="h-3 w-3" />
+                      </a>
+                    )}
                   </div>
                 </div>
               ))}

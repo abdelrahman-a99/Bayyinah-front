@@ -10,16 +10,15 @@ export function MessageBubble({ message }: MessageBubbleProps) {
   const isUser = message.role === "user";
 
   const citations = Array.isArray(message.metadata.citations)
-    ? (message.metadata.citations as Array<{
-        source_tier?: string;
-        document_name?: string;
-        content?: string;
-        metadata?: {
-          page?: string | number;
-          sura?: string;
-        };
-      }>)
-    : [];
+  ? (message.metadata.citations as Array<{
+        uid?: string;
+        display?: string;
+        short?: string;
+        url?: string | null;
+        tier?: number;
+        is_narrative?: boolean;
+    }>)
+  : [];
 
   const usedSources = Array.isArray(message.metadata.used_sources)
     ? message.metadata.used_sources.filter(
@@ -69,7 +68,7 @@ export function MessageBubble({ message }: MessageBubbleProps) {
               : "bg-card border border-border text-card-foreground rounded-se-sm"
               }`}
           >
-            <div className="whitespace-pre-wrap wrap-break-word">{message.content}</div>
+            <div className="whitespace-pre-wrap break-word">{message.content}</div>
           </div>
 
           {/* Assistant Metadata / Citations */}
