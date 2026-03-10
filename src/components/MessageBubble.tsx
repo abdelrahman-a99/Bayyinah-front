@@ -38,6 +38,11 @@ export function MessageBubble({ message }: MessageBubbleProps) {
       ? (message.metadata.tier_breakdown as Record<string, number>)
       : {};
 
+  const streamingStatus =
+    typeof message.metadata.streaming_status === "string"
+      ? message.metadata.streaming_status
+      : "";
+
   return (
     <div className={`flex w-full ${isUser ? "justify-end" : "justify-start"} mb-6 animate-fade-in`}>
       <div
@@ -68,7 +73,9 @@ export function MessageBubble({ message }: MessageBubbleProps) {
               : "bg-card border border-border text-card-foreground rounded-se-sm"
               }`}
           >
-            <div className="whitespace-pre-wrap break-word">{message.content}</div>
+            <div className="whitespace-pre-wrap wrap-break-word">
+              {message.content || (!isUser && streamingStatus ? streamingStatus : "")}
+            </div>
           </div>
 
           {/* Assistant Metadata / Citations */}

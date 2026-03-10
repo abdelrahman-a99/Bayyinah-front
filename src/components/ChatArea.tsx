@@ -13,6 +13,13 @@ interface ChatAreaProps {
 export function ChatArea({ messages, isLoading, isInitialLoading }: ChatAreaProps) {
   const bottomRef = useRef<HTMLDivElement>(null);
 
+  const hasStreamingAssistant = messages.some(
+    (msg) =>
+      msg.role === "assistant" &&
+      ((typeof msg.metadata.is_streaming === "boolean" && msg.metadata.is_streaming) ||
+        (typeof msg.metadata.streaming_status === "string" && !msg.content))
+  );
+
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, isLoading]);
@@ -55,7 +62,7 @@ export function ChatArea({ messages, isLoading, isInitialLoading }: ChatAreaProp
           <MessageBubble key={msg.id} message={msg} />
         ))}
 
-        {isLoading && (
+        {isLoading && !hasStreamingAssistant && (
           <div className="flex w-full justify-start mb-6 animate-fade-in">
             <div className="flex gap-4 flex-row">
               <div className="flex-0 mt-1">

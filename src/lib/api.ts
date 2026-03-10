@@ -8,6 +8,7 @@ import {
   MessageCreate,
   MessageOut,
   UserOut,
+  StreamEvent,
 } from "./types";
 
 const API_BASE_URL = (process.env.NEXT_PUBLIC_API_URL || "").replace(/\/+$/, "");
@@ -148,4 +149,50 @@ export const api = {
     );
     return res.json();
   },
+
+  async streamMessage(
+    conversationId: string,
+    data: MessageCreate,
+    handlers: {
+      onEvent: (event: StreamEvent) => void;
+    }
+  ): Promise<void> {
+    const res = await fetchWithAuth(
+      `/conversations/${conversationId}/messages/stream`,
+      {
+        method: "POST",
+        body: JSON.stringify(data),
+      },
+      undefined,
+      600000
+    );
+
+    if (!res.body) {
+      throw new ApiError(500, "Streaming response body is missing");
+    }
+
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = "";
+
+    while (true) {
+      const { value, done } = await reader.read();
+      if (done) break;
+
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split("\n");
+      buffer = lines.pop() ?? "";
+
+      for (const line of lines) {
+        const trimmed = line.trim();
+        if (!trimmed) continue;
+        handlers.onEvent(JSON.parse(trimmed) as StreamEvent);
+      }
+    }
+
+    const trailing = buffer.trim();
+    if (trailing) {
+      handlers.onEvent(JSON.parse(trailing) as StreamEvent);
+    }
+  }
 };

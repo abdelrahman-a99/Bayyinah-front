@@ -44,3 +44,20 @@ export interface ChatResponse {
   user_message: MessageOut;
   assistant_message: MessageOut;
 }
+
+export type StreamEvent =
+  | { type: "user_message"; message: MessageOut }
+  | { type: "status"; stage?: string; message?: string }
+  | { type: "chunk"; delta: string }
+  | {
+      type: "final";
+      answer: string;
+      citations?: unknown[];
+      used_sources?: string[];
+      confidence_score?: number;
+      tier_breakdown?: Record<string, number>;
+      query_type?: string;
+      query_type_confidence?: number;
+    }
+  | { type: "assistant_message"; message: MessageOut }
+  | { type: "error"; detail: string; assistant_message?: MessageOut };

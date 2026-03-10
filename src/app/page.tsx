@@ -134,10 +134,91 @@ export default function ChatPage() {
     }
   };
 
+  // const handleSendMessage = async (content: string) => {
+  //   if (!content.trim()) return;
+
+  //   let targetConvId = activeId;
+
+  //   if (!targetConvId) {
+  //     try {
+  //       const title =
+  //         content.substring(0, 30) + (content.length > 30 ? "..." : "");
+  //       const newConv = await api.createConversation({ title });
+  //       setConversations((prev) => [newConv, ...prev]);
+  //       targetConvId = newConv.id;
+  //       setActiveId(newConv.id);
+  //     } catch (error) {
+  //       console.error("Failed to create auto-conversation:", error);
+  //       return;
+  //     }
+  //   }
+
+  //   if (!targetConvId) return;
+
+  //   const tempId = `temp-${Date.now()}`;
+  //   const userMsg: MessageOut = {
+  //     id: tempId,
+  //     conversation_id: targetConvId,
+  //     role: "user",
+  //     content,
+  //     metadata: {},
+  //     created_at: new Date().toISOString(),
+  //   };
+
+  //   setMessages((prev) => [...prev, userMsg]);
+  //   setIsAiTyping(true);
+
+  //   try {
+  //     const response = await api.sendMessage(targetConvId, { content });
+
+  //     setMessages((prev) => [
+  //       ...prev.filter((m) => m.id !== tempId),
+  //       response.user_message,
+  //       response.assistant_message,
+  //     ]);
+
+  //     const currentConv = conversations.find((c) => c.id === targetConvId);
+  //     if (
+  //       currentConv &&
+  //       currentConv.title === "محادثة جديدة" &&
+  //       messages.length === 0
+  //     ) {
+  //       const title =
+  //         content.substring(0, 30) + (content.length > 30 ? "..." : "");
+
+  //       api.updateConversation(targetConvId, { title }).then((updated) => {
+  //         setConversations((prev) =>
+  //           prev.map((c) => (c.id === targetConvId ? updated : c))
+  //         );
+  //       });
+  //     }
+  //   } catch (error: unknown) {
+  //     console.error("Failed to send message:", error);
+  //     setMessages((prev) => prev.filter((m) => m.id !== tempId));
+
+  //     let message = "حدث خطأ غير متوقع";
+
+  //     if (error instanceof DOMException && error.name === "AbortError") {
+  //       message = "استغرقت الاستجابة وقتاً أطول من المتوقع. يرجى إعادة المحاولة بعد قليل.";
+  //     } else if (error instanceof Error) {
+  //       message = error.message;
+  //     }
+
+  //     toast.error(`عذراً، ${message}`);
+  //   } finally {
+  //     setIsAiTyping(false);
+  //   }
+  // };
+
   const handleSendMessage = async (content: string) => {
     if (!content.trim()) return;
 
     let targetConvId = activeId;
+    const wasNewConversation = !targetConvId;
+    const shouldRenameAfterFirstMessage =
+      !!targetConvId &&
+      conversations.find((c) => c.id === targetConvId)?.title === "محادثة جديدة" &&
+      messages.length === 0;
 
     if (!targetConvId) {
       try {
@@ -155,9 +236,13 @@ export default function ChatPage() {
 
     if (!targetConvId) return;
 
-    const tempId = `temp-${Date.now()}`;
+    const now = Date.now();
+
+    const userTempId = `temp-user-${now}`;
+    const assistantTempId = `temp-assistant-${now}`;
+
     const userMsg: MessageOut = {
-      id: tempId,
+      id: userTempId,
       conversation_id: targetConvId,
       role: "user",
       content,
@@ -165,24 +250,129 @@ export default function ChatPage() {
       created_at: new Date().toISOString(),
     };
 
-    setMessages((prev) => [...prev, userMsg]);
+    const assistantMsg: MessageOut = {
+      id: assistantTempId,
+      conversation_id: targetConvId,
+      role: "assistant",
+      content: "",
+      metadata: {
+        is_streaming: true,
+        streaming_status: "جاري إرسال الطلب...",
+        citations: [],
+        used_sources: [],
+        confidence_score: 0,
+        tier_breakdown: {},
+      },
+      created_at: new Date().toISOString(),
+    };
+
+    setMessages((prev) => [...prev, userMsg, assistantMsg]);
     setIsAiTyping(true);
 
     try {
-      const response = await api.sendMessage(targetConvId, { content });
+      await api.streamMessage(targetConvId, { content }, {
+        onEvent: (event) => {
+          if (event.type === "user_message") {
+            setMessages((prev) =>
+              prev.map((m) => (m.id === userTempId ? event.message : m))
+            );
+            return;
+          }
 
-      setMessages((prev) => [
-        ...prev.filter((m) => m.id !== tempId),
-        response.user_message,
-        response.assistant_message,
-      ]);
+          if (event.type === "status") {
+            setMessages((prev) =>
+              prev.map((m) =>
+                m.id === assistantTempId
+                  ? {
+                      ...m,
+                      metadata: {
+                        ...m.metadata,
+                        is_streaming: true,
+                        streaming_status: event.message || "جاري المعالجة...",
+                      },
+                    }
+                  : m
+              )
+            );
+            return;
+          }
 
-      const currentConv = conversations.find((c) => c.id === targetConvId);
-      if (
-        currentConv &&
-        currentConv.title === "محادثة جديدة" &&
-        messages.length === 0
-      ) {
+          if (event.type === "chunk") {
+            setMessages((prev) =>
+              prev.map((m) =>
+                m.id === assistantTempId
+                  ? {
+                      ...m,
+                      content: `${m.content}${event.delta}`,
+                      metadata: {
+                        ...m.metadata,
+                        is_streaming: true,
+                        streaming_status: "",
+                      },
+                    }
+                  : m
+              )
+            );
+            return;
+          }
+
+          if (event.type === "final") {
+            setMessages((prev) =>
+              prev.map((m) =>
+                m.id === assistantTempId
+                  ? {
+                      ...m,
+                      content: event.answer ?? m.content,
+                      metadata: {
+                        citations: Array.isArray(event.citations) ? event.citations : [],
+                        used_sources: Array.isArray(event.used_sources) ? event.used_sources : [],
+                        confidence_score:
+                          typeof event.confidence_score === "number"
+                            ? event.confidence_score
+                            : 0,
+                        tier_breakdown:
+                          event.tier_breakdown &&
+                          typeof event.tier_breakdown === "object"
+                            ? event.tier_breakdown
+                            : {},
+                        query_type: event.query_type ?? "",
+                        query_type_confidence:
+                          typeof event.query_type_confidence === "number"
+                            ? event.query_type_confidence
+                            : 0,
+                        is_streaming: false,
+                        streaming_status: "",
+                      },
+                    }
+                  : m
+              )
+            );
+            return;
+          }
+
+          if (event.type === "assistant_message") {
+            setMessages((prev) =>
+              prev.map((m) => (m.id === assistantTempId ? event.message : m))
+            );
+            return;
+          }
+
+          if (event.type === "error") {
+            if (event.assistant_message) {
+              setMessages((prev) =>
+                prev.map((m) => (m.id === assistantTempId ? event.assistant_message! : m))
+              );
+            } else {
+              setMessages((prev) => prev.filter((m) => m.id !== assistantTempId));
+            }
+
+            toast.error(`عذراً، ${event.detail}`);
+            return;
+          }
+        },
+      });
+
+      if (wasNewConversation || shouldRenameAfterFirstMessage) {
         const title =
           content.substring(0, 30) + (content.length > 30 ? "..." : "");
 
@@ -193,8 +383,8 @@ export default function ChatPage() {
         });
       }
     } catch (error: unknown) {
-      console.error("Failed to send message:", error);
-      setMessages((prev) => prev.filter((m) => m.id !== tempId));
+      console.error("Failed to stream message:", error);
+      setMessages((prev) => prev.filter((m) => m.id !== userTempId && m.id !== assistantTempId));
 
       let message = "حدث خطأ غير متوقع";
 
