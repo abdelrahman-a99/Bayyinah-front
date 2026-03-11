@@ -5,10 +5,11 @@ import { Textarea } from "@/components/ui/textarea";
 
 interface MessageInputProps {
   onSend: (content: string) => void;
-  disabled?: boolean;
+  sendDisabled?: boolean;
+  inputDisabled?: boolean;
 }
 
-export function MessageInput({ onSend, disabled }: MessageInputProps) {
+export function MessageInput({ onSend, sendDisabled, inputDisabled }: MessageInputProps) {
   const [content, setContent] = useState("");
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -21,7 +22,7 @@ export function MessageInput({ onSend, disabled }: MessageInputProps) {
 
   const handleSend = () => {
     const trimmed = content.trim();
-    if (!trimmed || disabled) return;
+    if (!trimmed || sendDisabled) return;
     onSend(trimmed);
     setContent("");
     if (textareaRef.current) {
@@ -45,7 +46,7 @@ export function MessageInput({ onSend, disabled }: MessageInputProps) {
         onChange={(e) => setContent(e.target.value)}
         onKeyDown={handleKeyDown}
         placeholder="اسأل بَيِّنَة عن آية أو تفسير أو حديث..."
-        disabled={disabled}
+        disabled={inputDisabled}
         className="flex-1 min-h-12 max-h-50 border-0 focus-visible:ring-0 focus-visible:border-transparent resize-none font-naskh text-base py-3 px-4 shadow-none bg-transparent overflow-y-auto leading-relaxed"
         style={{ fieldSizing: "content" }}
         dir="rtl"
@@ -54,7 +55,7 @@ export function MessageInput({ onSend, disabled }: MessageInputProps) {
       <div className="shrink-0 ms-1 me-1 mb-1.5">
         <Button
           onClick={handleSend}
-          disabled={!content.trim() || disabled}
+          disabled={!content.trim() || sendDisabled}
           size="icon"
           className="h-9 w-9 rounded-full bg-primary text-primary-foreground hover:bg-primary/90 transition-all shadow-sm cursor-pointer flex items-center justify-center p-0"
         >

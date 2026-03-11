@@ -582,8 +582,9 @@ export default function ChatPage() {
         <div className="px-3 pt-2 pb-3 md:px-6 md:pt-2 md:pb-2 bg-linear-to-t from-background via-background to-transparent shrink-0">
           <MessageInput
             onSend={handleSendMessage}
-            disabled={isAiTyping || isLoadingMessages || backendUnavailable || !user?.id}
-          />
+            sendDisabled={isAiTyping || isLoadingMessages || backendUnavailable || !user?.id}
+            inputDisabled={backendUnavailable || !user?.id}
+        />
           <p className="text-center text-xs text-muted-foreground mt-2 font-naskh hidden md:block">
             يقدم الوكيل إجابات مستندة إلى القرآن الكريم والسنة النبوية بإذن الله
           </p>
