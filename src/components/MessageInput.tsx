@@ -44,7 +44,7 @@ export function MessageInput({ onSend, disabled }: MessageInputProps) {
         value={content}
         onChange={(e) => setContent(e.target.value)}
         onKeyDown={handleKeyDown}
-        placeholder="اسأل عن قصص الأنبياء..."
+        placeholder="اسأل بَيِّنَة عن آية أو تفسير أو حديث..."
         disabled={disabled}
         className="flex-1 min-h-12 max-h-50 border-0 focus-visible:ring-0 focus-visible:border-transparent resize-none font-naskh text-base py-3 px-4 shadow-none bg-transparent overflow-y-auto leading-relaxed"
         style={{ fieldSizing: "content" }}

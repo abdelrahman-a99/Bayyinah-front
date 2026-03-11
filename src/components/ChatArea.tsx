@@ -39,9 +39,9 @@ export function ChatArea({ messages, isLoading, isInitialLoading, onSuggestedQue
         <div className="w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center text-primary mb-6 shadow-sm">
           <BookOpenText className="w-10 h-10" />
         </div>
-        <h2 className="text-2xl font-bold font-kufi text-foreground mb-3">مرحباً بك في قصص الأنبياء</h2>
-        <p className="text-muted-foreground text-lg max-w-md font-naskh leading-relaxed">
-          يمكنك طرح أي سؤال حول قصص الأنبياء، وسأجيبك استناداً إلى مصادر موثوقة من القرآن الكريم والسنة النبوية.
+        <h2 className="text-2xl font-bold font-kufi text-foreground mb-3">مرحباً بك في بَيِّنَة</h2>
+        <p className="text-muted-foreground text-lg font-naskh max-w-2xl leading-relaxed">
+          يمكنك طرح أي سؤال ديني، وسأجيبك استناداً إلى القرآن الكريم والتفاسير والحديث الشريف والمصادر السردية الموثقة.
         </p>
 
         <div className="mt-8 flex flex-col md:flex-row flex-wrap justify-center gap-3 w-full max-w-2xl px-4">

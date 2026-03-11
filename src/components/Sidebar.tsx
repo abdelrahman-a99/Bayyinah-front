@@ -85,7 +85,7 @@ export function Sidebar({
             <BookOpenText className="w-5 h-5" />
           </div>
           <span className="text-sm font-bold font-kufi text-foreground">
-            قصص الأنبياء
+            بَيِّنَة
           </span>
         </div>
         {onToggle && (

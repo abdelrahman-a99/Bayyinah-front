@@ -565,7 +565,7 @@ export default function ChatPage() {
               isSidebarOpen ? "md:hidden" : ""
             }`}
           >
-            قصص الأنبياء
+            بَيِّنَة
           </div>
 
           <div className="w-9 md:hidden" />

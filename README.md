@@ -1,6 +1,6 @@
 # Bayyinah (Frontend)
 
-This is the Next.js frontend application for the Bayyinah-RAG. It provides an immersive, Islamic-themed chat interface with RTL (Right-to-Left) Arabic support.
+This is the Next.js frontend application for Bayyinah. It provides an immersive Arabic RTL chat interface for asking about the Quran, tafsir, hadith, and curated narrative sources.
 
 ## Tech Stack
 
@@ -48,5 +48,5 @@ Open [http://localhost:3000](http://localhost:3000) with your browser.
 
 - **Google Login Flow:** Authenticate seamlessly via Supabase.
 - **Arabic UI/UX:** Full RTL support, styled specifically with customized typography for Arabic reading readability.
-- **RAG Citations:** Specialized components to render structured JSON citations from the AI backend to ground the AI responses in Quranic/Sunnah facts.
+- **RAG Citations:** Specialized components to render structured citations from the AI backend and ground answers in Quran, tafsir, hadith, and curated narrative sources.
 - **Responsive:** Optimized for both mobile and desktop views using Tailwind CSS.

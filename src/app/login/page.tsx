@@ -44,8 +44,8 @@ export default function LoginPage() {
           <div className="inline-flex items-center justify-center p-4 rounded-full bg-primary/10 text-primary mb-4 shadow-inner">
             <BookOpenText className="w-12 h-12 rtl-flip" />
           </div>
-          <h1 className="text-4xl font-bold font-kufi text-foreground mb-2">قصص الأنبياء</h1>
-          <p className="text-muted-foreground text-lg">وكيل ذكاء اصطناعي للإجابة عن أسئلتك</p>
+          <h1 className="text-4xl font-bold font-kufi text-foreground mb-2">بَيِّنَة</h1>
+          <p className="text-muted-foreground text-lg">بوابتك للقرآن والتفسير والسنة والمصادر السردية الموثقة</p>
         </div>
 
         <Card className="glass-card border-none shadow-2xl">

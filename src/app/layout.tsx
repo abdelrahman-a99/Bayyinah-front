@@ -21,8 +21,8 @@ const notoNaskh = Noto_Naskh_Arabic({
 });
 
 export const metadata: Metadata = {
-  title: "قصص الأنبياء - AI-Powered Stories Agent",
-  description: "وكيل ذكاء اصطناعي للإجابة عن أسئلة قصص الأنبياء باستخدام مصادر موثوقة.",
+  title: "بَيِّنَة — وكيل معرفي للقرآن والتفسير والسنة",
+  description: "بَيِّنَة وكيل ذكاء اصطناعي للإجابة عن الأسئلة اعتماداً على القرآن الكريم والتفاسير والحديث الشريف والمصادر السردية الموثقة.",
 };
 
 export default function RootLayout({
