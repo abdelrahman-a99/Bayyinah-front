@@ -21,8 +21,62 @@ const notoNaskh = Noto_Naskh_Arabic({
 });
 
 export const metadata: Metadata = {
-  title: "بَيِّنَة — وكيل معرفي للقرآن والتفسير والسنة",
-  description: "بَيِّنَة وكيل ذكاء اصطناعي للإجابة عن الأسئلة اعتماداً على القرآن الكريم والتفاسير والحديث الشريف والمصادر السردية الموثقة.",
+  metadataBase: new URL("https://bayyinah-alpha.vercel.app/"),
+  applicationName: "بَيِّنَة",
+  title: {
+    default: "بَيِّنَة",
+    template: "%s | بَيِّنَة",
+  },
+  description:
+    "بَيِّنَة منصة عربية ذكية للإجابة عن الأسئلة اعتماداً على القرآن الكريم والتفاسير والحديث الشريف والمصادر السردية الموثقة.",
+  keywords: [
+    "بَيِّنَة",
+    "القرآن الكريم",
+    "تفسير القرآن",
+    "الحديث الشريف",
+    "صحيح مسلم",
+    "قصص الأنبياء",
+    "إسلام",
+    "أسئلة دينية",
+    "ذكاء اصطناعي إسلامي",
+    "Arabic Islamic AI",
+    "Quran",
+    "Tafsir",
+    "Hadith",
+  ],
+  authors: [{ name: "بَيِّنَة" }],
+  creator: "بَيِّنَة",
+  publisher: "بَيِّنَة",
+  category: "education",
+  alternates: {
+    canonical: "/",
+  },
+  openGraph: {
+    type: "website",
+    locale: "ar_AR",
+    url: "/",
+    siteName: "بَيِّنَة",
+    title: "بَيِّنَة",
+    description:
+      "منصة عربية ذكية للإجابة عن الأسئلة اعتماداً على القرآن الكريم والتفاسير والحديث الشريف والمصادر السردية الموثقة.",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "بَيِّنَة",
+    description:
+      "منصة عربية ذكية للإجابة عن الأسئلة اعتماداً على القرآن الكريم والتفاسير والحديث الشريف والمصادر السردية الموثقة.",
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-video-preview": -1,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+    },
+  },
 };
 
 export default function RootLayout({
