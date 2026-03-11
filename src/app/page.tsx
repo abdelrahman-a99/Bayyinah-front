@@ -10,7 +10,7 @@ import { MessageInput } from "@/components/MessageInput";
 import { Sheet, SheetContent, SheetTitle, SheetDescription, SheetTrigger, } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { Menu, Loader2, PanelRightOpen } from "lucide-react";
+import { Menu, Loader2, PanelRightOpen, LogOut } from "lucide-react";
 import { toast } from "sonner";
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 
@@ -34,6 +34,8 @@ export default function ChatPage() {
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
+  const [isRetryingBackend, setIsRetryingBackend] = useState(false);
+  const [isSigningOut, setIsSigningOut] = useState(false);
 
   // Load conversations when authenticated user changes
   useEffect(() => {
@@ -421,11 +423,44 @@ export default function ChatPage() {
           </div>
 
           <div className="flex flex-col gap-3 sm:flex-row sm:justify-center">
-            <Button onClick={() => void retryBackendConnection()}>
-              إعادة المحاولة
+            <Button
+              className="min-w-35 cursor-pointer text-sm h-10 font-kufi disabled:cursor-not-allowed disabled:opacity-70"
+              onClick={async () => {
+                try {
+                  setIsRetryingBackend(true);
+                  await retryBackendConnection();
+                } finally {
+                  setIsRetryingBackend(false);
+                }
+              }}
+              disabled={isRetryingBackend || isSigningOut}
+            >
+              {isRetryingBackend ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  جارٍ إعادة المحاولة...
+                </>
+              ) : (
+                "إعادة المحاولة"
+              )}
             </Button>
-            <Button variant="outline" onClick={() => void signOut()}>
-              تسجيل الخروج
+
+            <Button
+              variant="outline"
+              className="min-w-35 cursor-pointer text-destructive border-destructive/30 hover:bg-red-500! hover:text-white! font-kufi text-sm h-10 disabled:cursor-not-allowed disabled:opacity-70"
+              onClick={async () => {
+                try {
+                  setIsSigningOut(true);
+                  await signOut();
+                } catch (error) {
+                  console.error("Failed to sign out from backend unavailable screen:", error);
+                  setIsSigningOut(false);
+                }
+              }}
+              disabled={isRetryingBackend || isSigningOut}
+            >
+              <LogOut className="h-4 w-4 rtl-flip" />
+              {isSigningOut ? "جارٍ تسجيل الخروج..." : "تسجيل الخروج"}
             </Button>
           </div>
         </div>
