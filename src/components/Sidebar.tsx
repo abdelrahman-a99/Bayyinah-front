@@ -44,6 +44,7 @@ export function Sidebar({
   const { user, signOut } = useAuth();
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editValue, setEditValue] = useState("");
+  const [isSigningOut, setIsSigningOut] = useState(false);
   const editInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -215,26 +216,42 @@ export function Sidebar({
 
       {/* User info + Logout */}
       <div className="p-3 bg-muted/20 shrink-0">
-        <div className="flex items-center gap-3 mb-3 px-1">
-          <div className="h-9 w-9 rounded-full bg-primary/15 text-primary flex items-center justify-center font-bold text-base shrink-0">
-            {user?.display_name?.charAt(0).toUpperCase() || "م"}
+        {user && !isSigningOut ? (
+          <div className="flex items-center gap-3 mb-3 px-1">
+            <div className="h-9 w-9 rounded-full bg-primary/15 text-primary flex items-center justify-center font-bold text-base shrink-0">
+              {(user.display_name || user.email || "م").charAt(0).toUpperCase()}
+            </div>
+            <div className="overflow-hidden flex-1 min-w-0">
+              <p className="truncate text-sm font-medium font-kufi text-foreground" dir="auto">
+                {user.display_name || user.email}
+              </p>
+              <p className="truncate text-xs text-muted-foreground font-sans" dir="auto">
+                {user.email}
+              </p>
+            </div>
           </div>
-          <div className="overflow-hidden flex-1 min-w-0">
-            <p className="truncate text-sm font-medium font-kufi text-foreground" dir="auto">
-              {user?.display_name || "مستخدم"}
-            </p>
-            <p className="truncate text-xs text-muted-foreground font-sans" dir="auto">
-              {user?.email}
-            </p>
+        ) : (
+          <div className="mb-3 px-1 text-sm text-muted-foreground font-kufi">
+            جارٍ تسجيل الخروج...
           </div>
-        </div>
+        )}
+
         <Button
           variant="outline"
-          className="w-full cursor-pointer text-destructive border-destructive/30 hover:bg-red-500! hover:text-white! font-kufi text-sm h-9"
-          onClick={signOut}
+          className="w-full cursor-pointer text-destructive border-destructive/30 hover:bg-red-500! hover:text-white! font-kufi text-sm h-9 disabled:cursor-not-allowed disabled:opacity-70"
+          onClick={async () => {
+            try {
+              setIsSigningOut(true);
+              await signOut();
+            } catch (error) {
+              console.error("Failed to sign out from sidebar:", error);
+              setIsSigningOut(false);
+            }
+          }}
+          disabled={isSigningOut}
         >
           <LogOut className="h-4 w-4 rtl-flip" />
-          تسجيل الخروج
+          {isSigningOut ? "جارٍ تسجيل الخروج..." : "تسجيل الخروج"}
         </Button>
       </div>
     </div>
