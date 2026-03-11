@@ -6,7 +6,6 @@ import { Input } from "@/components/ui/input";
 import { ConversationOut } from "@/lib/types";
 import { useAuth } from "@/contexts/AuthContext";
 import {
-  MessageSquare,
   Plus,
   Trash2,
   LogOut,
@@ -127,7 +126,7 @@ export function Sidebar({
             conversations.map((conv) => (
               <div
                 key={conv.id}
-                className={`group flex items-center gap-2.5 p-2.5 rounded-lg cursor-pointer transition-all border ${activeId === conv.id
+                className={`group flex items-center py-2 rounded-lg cursor-pointer transition-all border ${activeId === conv.id
                   ? "bg-primary/15 border-primary/20 shadow-sm text-foreground"
                   : "bg-transparent border-transparent hover:bg-muted/60 text-muted-foreground hover:text-foreground"
                   }`}
@@ -137,36 +136,33 @@ export function Sidebar({
                   }
                 }}
               >
-                <MessageSquare
-                  className={`h-4 w-4 shrink-0 ${activeId === conv.id ? "text-primary" : "opacity-60"
-                    }`}
-                />
-
-                {editingId === conv.id ? (
-                  <Input
-                    ref={editInputRef}
-                    autoFocus
-                    value={editValue}
-                    onChange={(e) => setEditValue(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") {
-                        if (editValue.trim() && editValue !== conv.title) {
-                          onRename(conv.id, editValue.trim());
+                <div className="flex items-center gap-2 flex-1 min-w-0">
+                  {editingId === conv.id ? (
+                    <Input
+                      ref={editInputRef}
+                      autoFocus
+                      value={editValue}
+                      onChange={(e) => setEditValue(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          if (editValue.trim() && editValue !== conv.title) {
+                            onRename(conv.id, editValue.trim());
+                          }
+                          setEditingId(null);
+                        } else if (e.key === "Escape") {
+                          setEditingId(null);
                         }
-                        setEditingId(null);
-                      } else if (e.key === "Escape") {
-                        setEditingId(null);
-                      }
-                    }}
-                    onFocus={(e) => e.target.select()}
-                    className="h-7 p-1 text-sm font-medium font-kufi flex-1 min-w-0 bg-transparent! border-primary/30 focus-visible:ring-1"
-                    onClick={(e) => e.stopPropagation()}
-                  />
-                ) : (
-                  <span className="truncate text-sm font-medium font-kufi flex-1 min-w-0" dir="auto">
-                    {conv.title}
-                  </span>
-                )}
+                      }}
+                      onFocus={(e) => e.target.select()}
+                      className="h-7 p-1 text-sm font-medium font-kufi flex-1 min-w-0 bg-transparent! border-primary/30 focus-visible:ring-1"
+                      onClick={(e) => e.stopPropagation()}
+                    />
+                  ) : (
+                    <span className="px-2 truncate text-sm font-medium font-kufi flex-1 min-w-0" dir="auto" title={conv.title}>
+                      {conv.title}
+                    </span>
+                  )}
+                </div>
 
                 <DropdownMenu dir="rtl">
                   <DropdownMenuTrigger
