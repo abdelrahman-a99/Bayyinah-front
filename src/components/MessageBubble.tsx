@@ -1,6 +1,5 @@
 import { MessageOut } from "@/lib/types";
 import { CitationCard } from "./CitationCard";
-import { User, Sparkles } from "lucide-react";
 
 interface MessageBubbleProps {
   message: MessageOut;
@@ -45,23 +44,7 @@ export function MessageBubble({ message }: MessageBubbleProps) {
 
   return (
     <div className={`flex w-full ${isUser ? "justify-end" : "justify-start"} mb-6 animate-fade-in`}>
-      <div
-        className={`flex max-w-[85%] md:max-w-[75%] gap-4 ${isUser ? "flex-row-reverse" : "flex-row"
-          }`}
-      >
-        {/* Avatar */}
-        <div className="flex-0 mt-1">
-          {isUser ? (
-            <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center text-primary shadow-sm border border-primary/20">
-              <User className="w-4 h-4" />
-            </div>
-          ) : (
-            <div className="w-8 h-8 rounded-full bg-secondary/20 flex items-center justify-center text-secondary-foreground shadow-sm border border-secondary/30">
-              <Sparkles className="w-4 h-4 text-secondary-foreground" />
-            </div>
-          )}
-        </div>
-
+      <div className={"flex max-w-[85%] md:max-w-[75%]"}>
         {/* Message Content */}
         <div
           className={`flex flex-col ${isUser ? "items-end" : "items-start"
